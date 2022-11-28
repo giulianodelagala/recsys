@@ -1,0 +1,186 @@
+TensorFlow 2.0 Upgrade Script
+-----------------------------
+Converted 8 files
+Detected 12 issues that require attention
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+File: ./NGCF/NMF.py
+--------------------------------------------------------------------------------
+./NGCF/NMF.py:54:14: WARNING: tf.nn.embedding_lookup requires manual check. `partition_strategy` has been removed from tf.nn.embedding_lookup.  The 'div' strategy will be used by default.
+./NGCF/NMF.py:55:18: WARNING: tf.nn.embedding_lookup requires manual check. `partition_strategy` has been removed from tf.nn.embedding_lookup.  The 'div' strategy will be used by default.
+./NGCF/NMF.py:56:18: WARNING: tf.nn.embedding_lookup requires manual check. `partition_strategy` has been removed from tf.nn.embedding_lookup.  The 'div' strategy will be used by default.
+./NGCF/NMF.py:361:12: WARNING: *.save requires manual check. (This warning is only applicable if the code saves a tf.Keras model) Keras model.save now saves to the Tensorflow SavedModel format by default, instead of HDF5. To continue saving to HDF5, add the argument save_format='h5' to the save() function.
+--------------------------------------------------------------------------------
+File: ./NGCF/NGCF.py
+--------------------------------------------------------------------------------
+./NGCF/NGCF.py:93:30: WARNING: tf.nn.embedding_lookup requires manual check. `partition_strategy` has been removed from tf.nn.embedding_lookup.  The 'div' strategy will be used by default.
+./NGCF/NGCF.py:94:34: WARNING: tf.nn.embedding_lookup requires manual check. `partition_strategy` has been removed from tf.nn.embedding_lookup.  The 'div' strategy will be used by default.
+./NGCF/NGCF.py:95:34: WARNING: tf.nn.embedding_lookup requires manual check. `partition_strategy` has been removed from tf.nn.embedding_lookup.  The 'div' strategy will be used by default.
+./NGCF/NGCF.py:519:12: WARNING: *.save requires manual check. (This warning is only applicable if the code saves a tf.Keras model) Keras model.save now saves to the Tensorflow SavedModel format by default, instead of HDF5. To continue saving to HDF5, add the argument save_format='h5' to the save() function.
+--------------------------------------------------------------------------------
+File: ./NGCF/BPRMF.py
+--------------------------------------------------------------------------------
+./NGCF/BPRMF.py:47:14: WARNING: tf.nn.embedding_lookup requires manual check. `partition_strategy` has been removed from tf.nn.embedding_lookup.  The 'div' strategy will be used by default.
+./NGCF/BPRMF.py:48:18: WARNING: tf.nn.embedding_lookup requires manual check. `partition_strategy` has been removed from tf.nn.embedding_lookup.  The 'div' strategy will be used by default.
+./NGCF/BPRMF.py:49:18: WARNING: tf.nn.embedding_lookup requires manual check. `partition_strategy` has been removed from tf.nn.embedding_lookup.  The 'div' strategy will be used by default.
+./NGCF/BPRMF.py:218:12: WARNING: *.save requires manual check. (This warning is only applicable if the code saves a tf.Keras model) Keras model.save now saves to the Tensorflow SavedModel format by default, instead of HDF5. To continue saving to HDF5, add the argument save_format='h5' to the save() function.
+================================================================================
+Detailed log follows:
+
+================================================================================
+================================================================================
+Input tree: './NGCF'
+================================================================================
+--------------------------------------------------------------------------------
+Processing file './NGCF/NMF.py'
+ outputting to './NGCFv2/NMF.py'
+--------------------------------------------------------------------------------
+
+42:21: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+43:25: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+44:25: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+46:28: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+47:27: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+54:14: INFO: Added keywords to args of function 'tf.nn.embedding_lookup'
+54:14: WARNING: tf.nn.embedding_lookup requires manual check. `partition_strategy` has been removed from tf.nn.embedding_lookup.  The 'div' strategy will be used by default.
+55:18: INFO: Added keywords to args of function 'tf.nn.embedding_lookup'
+55:18: WARNING: tf.nn.embedding_lookup requires manual check. `partition_strategy` has been removed from tf.nn.embedding_lookup.  The 'div' strategy will be used by default.
+56:18: INFO: Added keywords to args of function 'tf.nn.embedding_lookup'
+56:18: WARNING: tf.nn.embedding_lookup requires manual check. `partition_strategy` has been removed from tf.nn.embedding_lookup.  The 'div' strategy will be used by default.
+66:19: INFO: Renamed 'tf.train.RMSPropOptimizer' to 'tf.compat.v1.train.RMSPropOptimizer'
+74:22: INFO: Changing tf.contrib.layers xavier initializer to a tf.compat.v1.keras.initializers.VarianceScaling and converting arguments.
+
+113:15: INFO: Renamed 'tf.log' to 'tf.math.log'
+114:30: INFO: Added keywords to args of function 'tf.reduce_mean'
+139:19: INFO: Changing keep_prob arg of tf.nn.dropout to rate, and recomputing value.
+
+177:19: INFO: Added keywords to args of function 'tf.shape'
+178:19: INFO: Added keywords to args of function 'tf.shape'
+208:13: INFO: Renamed 'tf.variable_scope' to 'tf.compat.v1.variable_scope'
+210:36: INFO: Renamed 'tf.AUTO_REUSE' to 'tf.compat.v1.AUTO_REUSE'
+247:12: INFO: Renamed 'tf.train.Saver' to 'tf.compat.v1.train.Saver'
+255:21: INFO: Renamed 'tf.train.Saver' to 'tf.compat.v1.train.Saver'
+257:13: INFO: Renamed 'tf.ConfigProto' to 'tf.compat.v1.ConfigProto'
+259:11: INFO: Renamed 'tf.Session' to 'tf.compat.v1.Session'
+269:21: INFO: Renamed 'tf.global_variables_initializer' to 'tf.compat.v1.global_variables_initializer'
+287:21: INFO: Renamed 'tf.global_variables_initializer' to 'tf.compat.v1.global_variables_initializer'
+292:17: INFO: Renamed 'tf.global_variables_initializer' to 'tf.compat.v1.global_variables_initializer'
+361:12: WARNING: *.save requires manual check. (This warning is only applicable if the code saves a tf.Keras model) Keras model.save now saves to the Tensorflow SavedModel format by default, instead of HDF5. To continue saving to HDF5, add the argument save_format='h5' to the save() function.
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file './NGCF/NGCF.py'
+ outputting to './NGCFv2/NGCF.py'
+--------------------------------------------------------------------------------
+
+53:21: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+54:25: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+55:25: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+62:28: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+63:28: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+93:30: INFO: Added keywords to args of function 'tf.nn.embedding_lookup'
+93:30: WARNING: tf.nn.embedding_lookup requires manual check. `partition_strategy` has been removed from tf.nn.embedding_lookup.  The 'div' strategy will be used by default.
+94:34: INFO: Added keywords to args of function 'tf.nn.embedding_lookup'
+94:34: WARNING: tf.nn.embedding_lookup requires manual check. `partition_strategy` has been removed from tf.nn.embedding_lookup.  The 'div' strategy will be used by default.
+95:34: INFO: Added keywords to args of function 'tf.nn.embedding_lookup'
+95:34: WARNING: tf.nn.embedding_lookup requires manual check. `partition_strategy` has been removed from tf.nn.embedding_lookup.  The 'div' strategy will be used by default.
+112:19: INFO: Renamed 'tf.train.AdamOptimizer' to 'tf.compat.v1.train.AdamOptimizer'
+117:22: INFO: Changing tf.contrib.layers xavier initializer to a tf.compat.v1.keras.initializers.VarianceScaling and converting arguments.
+
+198:34: INFO: Renamed 'tf.sparse_tensor_dense_matmul' to 'tf.sparse.sparse_dense_matmul'
+216:29: INFO: Changing keep_prob arg of tf.nn.dropout to rate, and recomputing value.
+
+237:34: INFO: Renamed 'tf.sparse_tensor_dense_matmul' to 'tf.sparse.sparse_dense_matmul'
+241:25: INFO: Changing keep_prob arg of tf.nn.dropout to rate, and recomputing value.
+
+259:34: INFO: Renamed 'tf.sparse_tensor_dense_matmul' to 'tf.sparse.sparse_dense_matmul'
+265:29: INFO: Changing keep_prob arg of tf.nn.dropout to rate, and recomputing value.
+
+275:21: INFO: Added keywords to args of function 'tf.reduce_sum'
+276:21: INFO: Added keywords to args of function 'tf.reduce_sum'
+283:15: INFO: Renamed 'tf.log' to 'tf.math.log'
+284:30: INFO: Added keywords to args of function 'tf.reduce_mean'
+309:25: INFO: Renamed 'tf.random_uniform' to 'tf.random.uniform'
+311:18: INFO: Renamed 'tf.sparse_retain' to 'tf.sparse.retain'
+313:25: INFO: Renamed 'tf.div' to 'tf.compat.v1.div'
+366:12: INFO: Renamed 'tf.train.Saver' to 'tf.compat.v1.train.Saver'
+373:21: INFO: Renamed 'tf.train.Saver' to 'tf.compat.v1.train.Saver'
+375:13: INFO: Renamed 'tf.ConfigProto' to 'tf.compat.v1.ConfigProto'
+377:11: INFO: Renamed 'tf.Session' to 'tf.compat.v1.Session'
+392:21: INFO: Renamed 'tf.global_variables_initializer' to 'tf.compat.v1.global_variables_initializer'
+411:21: INFO: Renamed 'tf.global_variables_initializer' to 'tf.compat.v1.global_variables_initializer'
+416:17: INFO: Renamed 'tf.global_variables_initializer' to 'tf.compat.v1.global_variables_initializer'
+519:12: WARNING: *.save requires manual check. (This warning is only applicable if the code saves a tf.Keras model) Keras model.save now saves to the Tensorflow SavedModel format by default, instead of HDF5. To continue saving to HDF5, add the argument save_format='h5' to the save() function.
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file './NGCF/BPRMF.py'
+ outputting to './NGCFv2/BPRMF.py'
+--------------------------------------------------------------------------------
+
+38:21: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+39:25: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+40:25: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+47:14: INFO: Added keywords to args of function 'tf.nn.embedding_lookup'
+47:14: WARNING: tf.nn.embedding_lookup requires manual check. `partition_strategy` has been removed from tf.nn.embedding_lookup.  The 'div' strategy will be used by default.
+48:18: INFO: Added keywords to args of function 'tf.nn.embedding_lookup'
+48:18: WARNING: tf.nn.embedding_lookup requires manual check. `partition_strategy` has been removed from tf.nn.embedding_lookup.  The 'div' strategy will be used by default.
+49:18: INFO: Added keywords to args of function 'tf.nn.embedding_lookup'
+49:18: WARNING: tf.nn.embedding_lookup requires manual check. `partition_strategy` has been removed from tf.nn.embedding_lookup.  The 'div' strategy will be used by default.
+58:19: INFO: Renamed 'tf.train.RMSPropOptimizer' to 'tf.compat.v1.train.RMSPropOptimizer'
+67:22: INFO: Changing tf.contrib.layers xavier initializer to a tf.compat.v1.keras.initializers.VarianceScaling and converting arguments.
+
+76:21: INFO: Added keywords to args of function 'tf.reduce_sum'
+77:21: INFO: Added keywords to args of function 'tf.reduce_sum'
+82:15: INFO: Renamed 'tf.log' to 'tf.math.log'
+84:30: INFO: Added keywords to args of function 'tf.reduce_mean'
+112:12: INFO: Renamed 'tf.train.Saver' to 'tf.compat.v1.train.Saver'
+120:21: INFO: Renamed 'tf.train.Saver' to 'tf.compat.v1.train.Saver'
+122:13: INFO: Renamed 'tf.ConfigProto' to 'tf.compat.v1.ConfigProto'
+124:11: INFO: Renamed 'tf.Session' to 'tf.compat.v1.Session'
+133:21: INFO: Renamed 'tf.global_variables_initializer' to 'tf.compat.v1.global_variables_initializer'
+151:21: INFO: Renamed 'tf.global_variables_initializer' to 'tf.compat.v1.global_variables_initializer'
+155:17: INFO: Renamed 'tf.global_variables_initializer' to 'tf.compat.v1.global_variables_initializer'
+218:12: WARNING: *.save requires manual check. (This warning is only applicable if the code saves a tf.Keras model) Keras model.save now saves to the Tensorflow SavedModel format by default, instead of HDF5. To continue saving to HDF5, add the argument save_format='h5' to the save() function.
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file './NGCF/utility/parser.py'
+ outputting to './NGCFv2/utility/parser.py'
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file './NGCF/utility/metrics.py'
+ outputting to './NGCFv2/utility/metrics.py'
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file './NGCF/utility/batch_test.py'
+ outputting to './NGCFv2/utility/batch_test.py'
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file './NGCF/utility/helper.py'
+ outputting to './NGCFv2/utility/helper.py'
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file './NGCF/utility/load_data.py'
+ outputting to './NGCFv2/utility/load_data.py'
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
