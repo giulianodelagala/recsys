@@ -53,6 +53,8 @@ class NGCF(object):
         '''
         # placeholder definition
         self.users = tf.compat.v1.placeholder(tf.int32, shape=(None,))
+        self.items =  tf.compat.v1.placeholder(tf.int32, shape=(None,))
+        self.bought = tf.compat.v1.placeholder(tf.float32, shape=(self.batch_size, self.batch_size))
         self.pos_items = tf.compat.v1.placeholder(tf.int32, shape=(None,))
         self.neg_items = tf.compat.v1.placeholder(tf.int32, shape=(None,))
 
@@ -95,6 +97,7 @@ class NGCF(object):
         self.u_g_embeddings = tf.nn.embedding_lookup(params=self.ua_embeddings, ids=self.users)
         self.pos_i_g_embeddings = tf.nn.embedding_lookup(params=self.ia_embeddings, ids=self.pos_items)
         self.neg_i_g_embeddings = tf.nn.embedding_lookup(params=self.ia_embeddings, ids=self.neg_items)
+        self.i_g_embeddings = tf.nn.embedding_lookup(params=self.ia_embeddings, ids=self.items)
 
         """
         *********************************************************
@@ -106,10 +109,12 @@ class NGCF(object):
         *********************************************************
         Generate Predictions & Optimize via BPR loss.
         """
-        self.mf_loss, self.emb_loss, self.reg_loss = self.create_bpr_loss(self.u_g_embeddings,
+        self.mf_loss, self.emb_loss, self.reg_loss, self.variance_loss = self.create_bpr_loss(self.u_g_embeddings,
                                                                           self.pos_i_g_embeddings,
-                                                                          self.neg_i_g_embeddings)
-        self.loss = self.mf_loss + self.emb_loss + self.reg_loss
+                                                                          self.neg_i_g_embeddings,
+                                                                          self.i_g_embeddings,
+                                                                          self.bought)
+        self.loss = self.mf_loss + self.emb_loss + self.reg_loss + self.variance_loss
 
         self.opt = tf.compat.v1.train.AdamOptimizer(learning_rate=self.lr).minimize(self.loss)
 
@@ -273,7 +278,7 @@ class NGCF(object):
         return u_g_embeddings, i_g_embeddings
 
 
-    def create_bpr_loss(self, users, pos_items, neg_items):
+    def create_bpr_loss(self, users, pos_items, neg_items, items, bought):
         pos_scores = tf.reduce_sum(input_tensor=tf.multiply(users, pos_items), axis=1)
         neg_scores = tf.reduce_sum(input_tensor=tf.multiply(users, neg_items), axis=1)
 
@@ -295,7 +300,21 @@ class NGCF(object):
 
         reg_loss = tf.constant(0.0, tf.float32, [1])
 
-        return mf_loss, emb_loss, reg_loss
+        """
+        Pèrdida de varianza. Minimizar.
+        """
+
+        inp = tf.matmul(users, items, transpose_a=False, transpose_b=True)
+
+        e = tf.nn.softmax(inp, axis=1) # (softmax por filas)
+
+        f = tf.multiply(e, bought)
+
+        g = tf.reduce_sum(f, axis=1) # sumar todos los items de una columna para tener el puntaje de cada usuario
+
+        variance_loss = tf.math.reduce_variance(g)
+
+        return mf_loss, emb_loss, reg_loss, variance_loss
 
     def _convert_sp_mat_to_sp_tensor(self, X):
         coo = X.tocoo().astype(np.float32)
@@ -464,9 +483,10 @@ if __name__ == '__main__':
         n_batch = data_generator.n_train // args.batch_size + 1
 
         for idx in range(n_batch):
-            users, pos_items, neg_items = data_generator.sample()
+            users, pos_items, neg_items, items, bought = data_generator.sample()
             _, batch_loss, batch_mf_loss, batch_emb_loss, batch_reg_loss = sess.run([model.opt, model.loss, model.mf_loss, model.emb_loss, model.reg_loss],
                                feed_dict={model.users: users, model.pos_items: pos_items,
+                                          model.items: items, model.bought: bought,
                                           model.node_dropout: eval(args.node_dropout),
                                           model.mess_dropout: eval(args.mess_dropout),
                                           model.neg_items: neg_items})
