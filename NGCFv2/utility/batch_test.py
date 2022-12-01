@@ -11,7 +11,7 @@ from utility.load_data import *
 import multiprocessing
 import heapq
 
-cores = multiprocessing.cpu_count() // 2
+cores = multiprocessing.cpu_count()
 
 args = parse_args()
 Ks = eval(args.Ks)
@@ -37,6 +37,17 @@ def ranklist_by_heapq(user_pos_test, test_items, rating, Ks):
             r.append(0)
     auc = 0.
     return r, auc
+
+def recommended_items_by_heapq(user_pos_test, test_items, rating, Ks):
+    item_score = {}
+    for i in test_items:
+        item_score[i] = rating[i]
+
+    K_max = max(Ks)
+    K_max_item_score = heapq.nlargest(K_max, test_items, key=item_score.get)
+    # print(K_max_item_score)
+
+    return K_max_item_score
 
 def get_auc(item_score, user_pos_test):
     item_score = sorted(item_score.items(), key=lambda kv: kv[1])
@@ -71,6 +82,10 @@ def ranklist_by_sorted(user_pos_test, test_items, rating, Ks):
     return r, auc
 
 def get_performance(user_pos_test, r, auc, Ks):
+    # user_pos_test: lista de items que el usuario ha comprado
+    # r: lista de 1 si recomienda bien al usuario, 0 si no, ordenados por puntaje de recomendacion
+    # auc: auc
+    # Ks: numeros @k sobre los cuales realizar el precision, recall, ndcg, etc
     precision, recall, ndcg, hit_ratio = [], [], [], []
 
     for K in Ks:
@@ -106,6 +121,29 @@ def test_one_user(x):
         r, auc = ranklist_by_sorted(user_pos_test, test_items, rating, Ks)
 
     return get_performance(user_pos_test, r, auc, Ks)
+
+def get_global_metrics(user_batch_rating_uid):
+    Rs = list(map(lambda x: ranklist_by_heapq(
+        data_generator.test_set[x[1]],
+        list(set(range(ITEM_NUM)) - set(data_generator.train_items[x[1]])),
+        x[0],
+        Ks)[0], user_batch_rating_uid))
+
+    all_rec_items = list(map(lambda x: recommended_items_by_heapq(
+        data_generator.test_set[x[1]],
+        list(set(range(ITEM_NUM)) - set(data_generator.train_items[x[1]])),
+        x[0],
+        Ks), user_batch_rating_uid))
+    # [
+    #     (recomendaciones, usuario),
+    #     ...
+    # ]
+    variance = metrics.variance(Rs)
+    gini = metrics.gini(all_rec_items)
+    return{
+        "gini": gini,
+        "variance": variance
+    }
 
 
 def test(sess, model, users_to_test, drop_flag=False, batch_test_flag=False):
@@ -166,8 +204,9 @@ def test(sess, model, users_to_test, drop_flag=False, batch_test_flag=False):
                                                               model.node_dropout: [0.] * len(eval(args.layer_size)),
                                                               model.mess_dropout: [0.] * len(eval(args.layer_size))})
 
-        user_batch_rating_uid = zip(rate_batch, user_batch)
+        user_batch_rating_uid = list(zip(rate_batch, user_batch))
         batch_result = pool.map(test_one_user, user_batch_rating_uid)
+        global_metrics = get_global_metrics(user_batch_rating_uid)
         count += len(batch_result)
 
         for re in batch_result:
@@ -176,7 +215,7 @@ def test(sess, model, users_to_test, drop_flag=False, batch_test_flag=False):
             result['ndcg'] += re['ndcg']/n_test_users
             result['hit_ratio'] += re['hit_ratio']/n_test_users
             result['auc'] += re['auc']/n_test_users
-
+        result.update(global_metrics)
 
     assert count == n_test_users
     pool.close()
