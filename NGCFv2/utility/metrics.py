@@ -104,21 +104,21 @@ def variance(Rs):
     user_losses = list(map(user_loss, Rs))
     return np.var(user_losses)
 
-def gini(Rs):
+def gini(rec_items):
     # Rs:
     # [1 0 0 0 1 1 0] u1
     # [1 1 1 0 0 0 1] u2
 
-    # sumar por columnas y hacer argsort
-    rsums = np.sum(Rs, axis=0)
-    sort_indexes = np.argsort(rsums)
+    counter = Counter(np.concatenate(rec_items))
     gini = 0
-    for i in range(len(sort_indexes)):
-        gini += (2*i-len(sort_indexes) - 1) * rsums[sort_indexes[i]]
-    gini /= (len(sort_indexes) * np.sum(rsums))
+
+    item_count = sorted(counter.values())
+    for i in range(len(item_count)):
+        gini += (2*i-len(item_count) - 1) * item_count[i]
+    gini /= (len(item_count) * np.sum(item_count))
     return gini
 
 def GRU():
     # creo que este se muere porque es más dificil de calcular, mejor
-    # calcular ndcg por separado y luego unirlo por fuera 
+    # calcular ndcg por separado y luego unirlo por fuera
     pass

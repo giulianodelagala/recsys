@@ -45,6 +45,9 @@ class NGCF(object):
         self.regs = eval(args.regs)
         self.decay = self.regs[0]
 
+        self.loss_decay = 0#1/10
+        # variance loss decay
+
         self.verbose = args.verbose
 
         '''
@@ -312,7 +315,7 @@ class NGCF(object):
 
         g = tf.reduce_sum(f, axis=1) # sumar todos los items de una columna para tener el puntaje de cada usuario
 
-        variance_loss = tf.math.reduce_variance(g)
+        variance_loss = self.loss_decay * tf.math.reduce_variance(g)
 
         return mf_loss, emb_loss, reg_loss, variance_loss
 
@@ -473,18 +476,18 @@ if __name__ == '__main__':
     *********************************************************
     Train.
     """
-    loss_loger, pre_loger, rec_loger, ndcg_loger, hit_loger = [], [], [], [], []
+    loss_loger, pre_loger, rec_loger, ndcg_loger, hit_loger, variance_loger, gini_loger = [], [], [], [], [], [], []
     stopping_step = 0
     should_stop = False
 
     for epoch in range(args.epoch):
         t1 = time()
-        loss, mf_loss, emb_loss, reg_loss = 0., 0., 0., 0.
+        loss, mf_loss, emb_loss, reg_loss, variance_loss = 0., 0., 0., 0., 0.
         n_batch = data_generator.n_train // args.batch_size + 1
 
         for idx in range(n_batch):
             users, pos_items, neg_items, items, bought = data_generator.sample()
-            _, batch_loss, batch_mf_loss, batch_emb_loss, batch_reg_loss = sess.run([model.opt, model.loss, model.mf_loss, model.emb_loss, model.reg_loss],
+            _, batch_loss, batch_mf_loss, batch_emb_loss, batch_reg_loss, batch_variance_loss = sess.run([model.opt, model.loss, model.mf_loss, model.emb_loss, model.reg_loss, model.variance_loss],
                                feed_dict={model.users: users, model.pos_items: pos_items,
                                           model.items: items, model.bought: bought,
                                           model.node_dropout: eval(args.node_dropout),
@@ -494,6 +497,7 @@ if __name__ == '__main__':
             mf_loss += batch_mf_loss
             emb_loss += batch_emb_loss
             reg_loss += batch_reg_loss
+            variance_loss += batch_variance_loss
 
         if np.isnan(loss) == True:
             print('ERROR: loss is nan.')
@@ -519,11 +523,13 @@ if __name__ == '__main__':
         pre_loger.append(ret['precision'])
         ndcg_loger.append(ret['ndcg'])
         hit_loger.append(ret['hit_ratio'])
+        gini_loger.append(ret['gini'])
+        variance_loger.append(ret['variance'])
 
         if args.verbose > 0:
             perf_str = 'Epoch %d [%.1fs + %.1fs]: train==[%.5f=%.5f + %.5f + %.5f], recall=[%.5f, %.5f], ' \
                        'precision=[%.5f, %.5f], hit=[%.5f, %.5f], ndcg=[%.5f, %.5f], variance=[%.5f], gini=[%.5f]' % \
-                       (epoch, t2 - t1, t3 - t2, loss, mf_loss, emb_loss, reg_loss, ret['recall'][0], ret['recall'][-1],
+                       (epoch, t2 - t1, t3 - t2, loss, mf_loss, emb_loss, variance_loss, ret['recall'][0], ret['recall'][-1],
                         ret['precision'][0], ret['precision'][-1], ret['hit_ratio'][0], ret['hit_ratio'][-1],
                         ret['ndcg'][0], ret['ndcg'][-1], ret['variance'], ret['gini'])
             print(perf_str)
@@ -546,15 +552,19 @@ if __name__ == '__main__':
     pres = np.array(pre_loger)
     ndcgs = np.array(ndcg_loger)
     hit = np.array(hit_loger)
+    variances = np.array(variance_loger)
+    ginis = np.array(gini_loger)
 
     best_rec_0 = max(recs[:, 0])
     idx = list(recs[:, 0]).index(best_rec_0)
 
-    final_perf = "Best Iter=[%d]@[%.1f]\trecall=[%s], precision=[%s], hit=[%s], ndcg=[%s]" % \
+    final_perf = "Best Iter=[%d]@[%.1f]\trecall=[%s], precision=[%s], hit=[%s], ndcg=[%s] variance=[%s] , gini=[%s]" % \
                  (idx, time() - t0, '\t'.join(['%.5f' % r for r in recs[idx]]),
                   '\t'.join(['%.5f' % r for r in pres[idx]]),
                   '\t'.join(['%.5f' % r for r in hit[idx]]),
-                  '\t'.join(['%.5f' % r for r in ndcgs[idx]]))
+                  '\t'.join(['%.5f' % r for r in ndcgs[idx]]),
+                  '\t'.join(['%.5f' % variances[idx]]),
+                  '\t'.join(['%.5f' % ginis[idx]]))
     print(final_perf)
 
     save_path = '%soutput/%s/%s.result' % (args.proj_path, args.dataset, model.model_type)
