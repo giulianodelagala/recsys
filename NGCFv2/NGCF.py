@@ -45,7 +45,7 @@ class NGCF(object):
         self.regs = eval(args.regs)
         self.decay = self.regs[0]
 
-        self.loss_decay = 0#1/10
+        self.loss_decay = 1/10
         # variance loss decay
 
         self.verbose = args.verbose
