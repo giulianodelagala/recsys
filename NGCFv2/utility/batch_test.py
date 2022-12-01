@@ -71,6 +71,10 @@ def ranklist_by_sorted(user_pos_test, test_items, rating, Ks):
     return r, auc
 
 def get_performance(user_pos_test, r, auc, Ks):
+    # user_pos_test: lista de items que el usuario ha comprado
+    # r: lista de 1 si recomienda bien al usuario, 0 si no, ordenados por puntaje de recomendacion
+    # auc: auc
+    # Ks: numeros @k sobre los cuales realizar el precision, recall, ndcg, etc
     precision, recall, ndcg, hit_ratio = [], [], [], []
 
     for K in Ks:
@@ -106,6 +110,16 @@ def test_one_user(x):
         r, auc = ranklist_by_sorted(user_pos_test, test_items, rating, Ks)
 
     return get_performance(user_pos_test, r, auc, Ks)
+
+def get_global_metrics(user_batch_rating_uid, pool):
+    Rs = pool.map(lambda x: ranklist_by_heapq(data_generator.test_set[x[1]], list(set(range(ITEM_NUM)) - set(data_generator.test_set[x[1]])), x[0], Ks)[0], user_batch_rating_uid)
+    variance = metrics.variance(Rs)
+    gini = metrics.gini(Rs)
+
+    return{
+        "gini": gini,
+        "variance": variance
+    }
 
 
 def test(sess, model, users_to_test, drop_flag=False, batch_test_flag=False):
@@ -168,6 +182,7 @@ def test(sess, model, users_to_test, drop_flag=False, batch_test_flag=False):
 
         user_batch_rating_uid = zip(rate_batch, user_batch)
         batch_result = pool.map(test_one_user, user_batch_rating_uid)
+        global_metrics = get_global_metrics(user_batch_rating_uid, pool)
         count += len(batch_result)
 
         for re in batch_result:
@@ -176,7 +191,7 @@ def test(sess, model, users_to_test, drop_flag=False, batch_test_flag=False):
             result['ndcg'] += re['ndcg']/n_test_users
             result['hit_ratio'] += re['hit_ratio']/n_test_users
             result['auc'] += re['auc']/n_test_users
-
+        result.update(global_metrics)
 
     assert count == n_test_users
     pool.close()

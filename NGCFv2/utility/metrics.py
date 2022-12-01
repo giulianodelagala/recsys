@@ -1,4 +1,5 @@
 import numpy as np
+from collections import Counter
 from sklearn.metrics import roc_auc_score
 
 def recall(rank, ground_truth, N):
@@ -95,3 +96,29 @@ def auc(ground_truth, prediction):
     except Exception:
         res = 0.
     return res
+
+def user_loss(r):
+    return np.linalg.norm(r) / len(r)
+
+def variance(Rs):
+    user_losses = list(map(user_loss, Rs))
+    return np.var(user_losses)
+
+def gini(Rs):
+    # Rs:
+    # [1 0 0 0 1 1 0] u1
+    # [1 1 1 0 0 0 1] u2
+
+    # sumar por columnas y hacer argsort
+    rsums = np.sum(Rs, axis=0)
+    sort_indexes = np.argsort(rsums)
+    gini = 0
+    for i in range(len(sort_indexes)):
+        gini += (2*i-len(sort_indexes) - 1) * rsums[sort_indexes[i]]
+    gini /= (len(sort_indexes) * np.sum(rsums))
+    return gini
+
+def GRU():
+    # creo que este se muere porque es más dificil de calcular, mejor
+    # calcular ndcg por separado y luego unirlo por fuera 
+    pass
