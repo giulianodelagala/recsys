@@ -9,7 +9,6 @@ import tensorflow as tf
 import os
 import sys
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
-
 from utility.helper import *
 from utility.batch_test import *
 
@@ -483,9 +482,10 @@ if __name__ == '__main__':
     for epoch in range(args.epoch):
         t1 = time()
         loss, mf_loss, emb_loss, reg_loss, variance_loss = 0., 0., 0., 0., 0.
-        n_batch = data_generator.n_train // args.batch_size + 1
+        n_batch = data_generator.n_train // 10 // args.batch_size + 1
 
         for idx in range(n_batch):
+            anterior = time()
             users, pos_items, neg_items, items, bought = data_generator.sample()
             _, batch_loss, batch_mf_loss, batch_emb_loss, batch_reg_loss, batch_variance_loss = sess.run([model.opt, model.loss, model.mf_loss, model.emb_loss, model.reg_loss, model.variance_loss],
                                feed_dict={model.users: users, model.pos_items: pos_items,
@@ -493,6 +493,7 @@ if __name__ == '__main__':
                                           model.node_dropout: eval(args.node_dropout),
                                           model.mess_dropout: eval(args.mess_dropout),
                                           model.neg_items: neg_items})
+            actual = time()
             loss += batch_loss
             mf_loss += batch_mf_loss
             emb_loss += batch_emb_loss
