@@ -483,7 +483,7 @@ if __name__ == '__main__':
     for epoch in range(args.epoch):
         t1 = time()
         loss, mf_loss, emb_loss, reg_loss, variance_loss = 0., 0., 0., 0., 0.
-        n_batch = data_generator.n_train // args.batch_size + 1
+        n_batch = data_generator.n_train // 10 // args.batch_size + 1
 
         for idx in range(n_batch):
             users, pos_items, neg_items, items, bought = data_generator.sample()
