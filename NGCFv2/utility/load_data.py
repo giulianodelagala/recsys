@@ -81,6 +81,7 @@ class Data(object):
 
                     uid, test_items = items[0], items[1:]
                     self.test_set[uid] = test_items
+                self.exist_items_train = list(self.exist_items_train)
 
     def get_adj_mat(self):
         try:
