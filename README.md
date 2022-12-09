@@ -2,10 +2,13 @@
 Proyecto final del curso Sistema de Recomendadores, de la Escuela de Ciencia de Computación, Pontifica Universidad Católica de Chile.
 Autores: Mónica Cavieres, Julián García, Alexander Pinto.
 
-## Introduction
-Neural Graph Collaborative Filtering (NGCF) is a new recommendation framework based on graph neural network, explicitly encoding the collaborative signal in the form of high-order connectivities in user-item bipartite graph by performing embedding propagation.
+## Abstract
+Hoy en día los datos de cada individuo están cada vez más expuestos, y estos exigen ser tratados de manera responsable. Por otro lado, el concepto de \textit{fairness} exige la igualdad en el tratamiento y en el impacto, por lo tanto los algoritmos no deben presentar discriminación en sus resultados. 
+Nuestro trabajo propone un sistema recomendador denominado NGCF-var, el cual está basado en una red neuronal de grafos, que apunta a no tener un 
+sesgo para los datos protegidos de edad y género. Para este propósito se introdujo en el modelo la métrica de varianza en la etapa de cálculo de pérdida, con la idea de reducir diferencias en los resultados de precisión para diferentes grupos protegidos. Se realizó una evaluación de nuestro modelo sobre el dataset de Movielens, teniendo como atributos protegidos el género y la edad de los usuarios.
+Nuestros resultados preliminares no permiten dar una opinión concluyente sobre la idoneidad de la inclusión de la varianza, sin embargo nuestros resultados indican que es posible obtener resultados más estables y justos entre los grupos protegidos, además de una mejor cobertura de los ítemes recomendados.
 
-Basada en la implementación de NGCF
+Basada en la implementación de NGCF por:
 
 >Xiang Wang, Xiangnan He, Meng Wang, Fuli Feng, and Tat-Seng Chua (2019). Neural Graph Collaborative Filtering, [Paper in ACM DL](https://dl.acm.org/citation.cfm?doid=3331184.3331267) or [Paper in arXiv](https://arxiv.org/abs/1905.08108). In SIGIR'19, Paris, France, July 21-25, 2019.
 Author: Dr. Xiang Wang (xiangwang at u.nus.edu)
