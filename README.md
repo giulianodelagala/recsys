@@ -13,7 +13,6 @@ Basada en la implementación de NGCF por:
 >Xiang Wang, Xiangnan He, Meng Wang, Fuli Feng, and Tat-Seng Chua (2019). Neural Graph Collaborative Filtering, [Paper in ACM DL](https://dl.acm.org/citation.cfm?doid=3331184.3331267) or [Paper in arXiv](https://arxiv.org/abs/1905.08108). In SIGIR'19, Paris, France, July 21-25, 2019.
 Author: Dr. Xiang Wang (xiangwang at u.nus.edu)
 
-```
 ## Environment Requirement
 The code has been tested running under Python 3.6.5. The required packages are as follows:
 * tensorflow == 1.8.0
@@ -51,3 +50,25 @@ We provide movielens processed datasets.
 * `item_list.txt`
   * Item file.
   * Each line is a triplet (org_id, remap_id) for one item, where org_id and remap_id represent the ID of the item in the original and our datasets, respectively.
+
+
+## Provided notebooks
+
+* Analisis_de_datos.ipynb: it analyses the used datasets and sees its distribution on the sensitive attributes of age and gender, to generate the graphs.
+* preprocessing.py: it preprocesses the notebooks to be able to fit the required ngcf input format
+* RecBole.py: it preprocesses the recbole input data and runs the metrics over the selected models Popularity and BPR to compare them to the ngcf and ngcf var models
+
+WARNING: to change the importance of the variance loss, you must edit line 47 of NGCF.py directly, changing the number value as needed.
+
+## Provided ablated datasets
+
+* ml100_test_all: dataset with the complete testing set
+* ml100_test_m: dataset with test set with only male users
+* ml100_test_f: dataset with test set with only female users
+* ml100_test_1_age: dataset with test set with only users under 18
+* ml100_test_18_age: dataset with test set with only users from 18 to 24
+* ml100_test_25_age: dataset with test set with only users from 25 to 34
+* ml100_test_35_age: dataset with test set with only users from 35 to 44
+* ml100_test_45_age: dataset with test set with only users from 45 to 49
+* ml100_test_50_age: dataset with test set with only users from 50 to 55
+* ml100_test_56_age: dataset with test set with only users 56+
