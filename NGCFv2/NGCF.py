@@ -9,7 +9,6 @@ import tensorflow as tf
 import os
 import sys
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
-
 from utility.helper import *
 from utility.batch_test import *
 
@@ -45,6 +44,9 @@ class NGCF(object):
         self.regs = eval(args.regs)
         self.decay = self.regs[0]
 
+        self.loss_decay = 0#1/10
+        # variance loss decay
+
         self.verbose = args.verbose
 
         '''
@@ -53,6 +55,8 @@ class NGCF(object):
         '''
         # placeholder definition
         self.users = tf.compat.v1.placeholder(tf.int32, shape=(None,))
+        self.items =  tf.compat.v1.placeholder(tf.int32, shape=(None,))
+        self.bought = tf.compat.v1.placeholder(tf.float32, shape=(self.batch_size, self.batch_size))
         self.pos_items = tf.compat.v1.placeholder(tf.int32, shape=(None,))
         self.neg_items = tf.compat.v1.placeholder(tf.int32, shape=(None,))
 
@@ -95,6 +99,7 @@ class NGCF(object):
         self.u_g_embeddings = tf.nn.embedding_lookup(params=self.ua_embeddings, ids=self.users)
         self.pos_i_g_embeddings = tf.nn.embedding_lookup(params=self.ia_embeddings, ids=self.pos_items)
         self.neg_i_g_embeddings = tf.nn.embedding_lookup(params=self.ia_embeddings, ids=self.neg_items)
+        self.i_g_embeddings = tf.nn.embedding_lookup(params=self.ia_embeddings, ids=self.items)
 
         """
         *********************************************************
@@ -106,10 +111,12 @@ class NGCF(object):
         *********************************************************
         Generate Predictions & Optimize via BPR loss.
         """
-        self.mf_loss, self.emb_loss, self.reg_loss = self.create_bpr_loss(self.u_g_embeddings,
+        self.mf_loss, self.emb_loss, self.reg_loss, self.variance_loss = self.create_bpr_loss(self.u_g_embeddings,
                                                                           self.pos_i_g_embeddings,
-                                                                          self.neg_i_g_embeddings)
-        self.loss = self.mf_loss + self.emb_loss + self.reg_loss
+                                                                          self.neg_i_g_embeddings,
+                                                                          self.i_g_embeddings,
+                                                                          self.bought)
+        self.loss = self.mf_loss + self.emb_loss + self.reg_loss + self.variance_loss
 
         self.opt = tf.compat.v1.train.AdamOptimizer(learning_rate=self.lr).minimize(self.loss)
 
@@ -273,7 +280,7 @@ class NGCF(object):
         return u_g_embeddings, i_g_embeddings
 
 
-    def create_bpr_loss(self, users, pos_items, neg_items):
+    def create_bpr_loss(self, users, pos_items, neg_items, items, bought):
         pos_scores = tf.reduce_sum(input_tensor=tf.multiply(users, pos_items), axis=1)
         neg_scores = tf.reduce_sum(input_tensor=tf.multiply(users, neg_items), axis=1)
 
@@ -295,7 +302,21 @@ class NGCF(object):
 
         reg_loss = tf.constant(0.0, tf.float32, [1])
 
-        return mf_loss, emb_loss, reg_loss
+        """
+        Pèrdida de varianza. Minimizar.
+        """
+
+        inp = tf.matmul(users, items, transpose_a=False, transpose_b=True)
+
+        e = tf.nn.softmax(inp, axis=1) # (softmax por filas)
+
+        f = tf.multiply(e, bought)
+
+        g = tf.reduce_sum(f, axis=1) # sumar todos los items de una columna para tener el puntaje de cada usuario
+
+        variance_loss = self.loss_decay * tf.math.reduce_variance(g)
+
+        return mf_loss, emb_loss, reg_loss, variance_loss
 
     def _convert_sp_mat_to_sp_tensor(self, X):
         coo = X.tocoo().astype(np.float32)
@@ -454,38 +475,43 @@ if __name__ == '__main__':
     *********************************************************
     Train.
     """
-    loss_loger, pre_loger, rec_loger, ndcg_loger, hit_loger = [], [], [], [], []
+    loss_loger, pre_loger, rec_loger, ndcg_loger, hit_loger, variance_loger, gini_loger = [], [], [], [], [], [], []
     stopping_step = 0
     should_stop = False
 
     for epoch in range(args.epoch):
         t1 = time()
-        loss, mf_loss, emb_loss, reg_loss = 0., 0., 0., 0.
-        n_batch = data_generator.n_train // args.batch_size + 1
+        loss, mf_loss, emb_loss, reg_loss, variance_loss = 0., 0., 0., 0., 0.
+        n_batch = data_generator.n_train // 10 // args.batch_size + 1
 
         for idx in range(n_batch):
-            users, pos_items, neg_items = data_generator.sample()
-            _, batch_loss, batch_mf_loss, batch_emb_loss, batch_reg_loss = sess.run([model.opt, model.loss, model.mf_loss, model.emb_loss, model.reg_loss],
+            anterior = time()
+            users, pos_items, neg_items, items, bought = data_generator.sample()
+            _, batch_loss, batch_mf_loss, batch_emb_loss, batch_reg_loss, batch_variance_loss = sess.run([model.opt, model.loss, model.mf_loss, model.emb_loss, model.reg_loss, model.variance_loss],
                                feed_dict={model.users: users, model.pos_items: pos_items,
+                                          model.items: items, model.bought: bought,
                                           model.node_dropout: eval(args.node_dropout),
                                           model.mess_dropout: eval(args.mess_dropout),
                                           model.neg_items: neg_items})
+            actual = time()
             loss += batch_loss
             mf_loss += batch_mf_loss
             emb_loss += batch_emb_loss
             reg_loss += batch_reg_loss
+            variance_loss += batch_variance_loss
 
         if np.isnan(loss) == True:
             print('ERROR: loss is nan.')
             sys.exit()
 
         # print the test evaluation metrics each 10 epochs; pos:neg = 1:10.
-        if (epoch + 1) % 10 != 0:
-            if args.verbose > 0 and epoch % args.verbose == 0:
-                perf_str = 'Epoch %d [%.1fs]: train==[%.5f=%.5f + %.5f]' % (
-                    epoch, time() - t1, loss, mf_loss, reg_loss)
-                print(perf_str)
-            continue
+        # if (epoch + 1) % 10 != 0:
+        #     if args.verbose > 0 and epoch % args.verbose == 0:
+        #         perf_str = 'Epoch %d [%.1fs]: train==[%.5f=%.5f + %.5f]' % (
+        #             epoch, time() - t1, loss, mf_loss, reg_loss)
+        #         print(perf_str)
+        #     continue
+        # TODO: descomentar lo de antes para acelerar el calculo
 
         t2 = time()
         users_to_test = list(data_generator.test_set.keys())
@@ -498,13 +524,15 @@ if __name__ == '__main__':
         pre_loger.append(ret['precision'])
         ndcg_loger.append(ret['ndcg'])
         hit_loger.append(ret['hit_ratio'])
+        gini_loger.append(ret['gini'])
+        variance_loger.append(ret['variance'])
 
         if args.verbose > 0:
             perf_str = 'Epoch %d [%.1fs + %.1fs]: train==[%.5f=%.5f + %.5f + %.5f], recall=[%.5f, %.5f], ' \
-                       'precision=[%.5f, %.5f], hit=[%.5f, %.5f], ndcg=[%.5f, %.5f]' % \
-                       (epoch, t2 - t1, t3 - t2, loss, mf_loss, emb_loss, reg_loss, ret['recall'][0], ret['recall'][-1],
+                       'precision=[%.5f, %.5f], hit=[%.5f, %.5f], ndcg=[%.5f, %.5f], variance=[%.5f], gini=[%.5f]' % \
+                       (epoch, t2 - t1, t3 - t2, loss, mf_loss, emb_loss, variance_loss, ret['recall'][0], ret['recall'][-1],
                         ret['precision'][0], ret['precision'][-1], ret['hit_ratio'][0], ret['hit_ratio'][-1],
-                        ret['ndcg'][0], ret['ndcg'][-1])
+                        ret['ndcg'][0], ret['ndcg'][-1], ret['variance'], ret['gini'])
             print(perf_str)
 
         cur_best_pre_0, stopping_step, should_stop = early_stopping(ret['recall'][0], cur_best_pre_0,
@@ -525,15 +553,19 @@ if __name__ == '__main__':
     pres = np.array(pre_loger)
     ndcgs = np.array(ndcg_loger)
     hit = np.array(hit_loger)
+    variances = np.array(variance_loger)
+    ginis = np.array(gini_loger)
 
     best_rec_0 = max(recs[:, 0])
     idx = list(recs[:, 0]).index(best_rec_0)
 
-    final_perf = "Best Iter=[%d]@[%.1f]\trecall=[%s], precision=[%s], hit=[%s], ndcg=[%s]" % \
+    final_perf = "Best Iter=[%d]@[%.1f]\trecall=[%s], precision=[%s], hit=[%s], ndcg=[%s] variance=[%s] , gini=[%s]" % \
                  (idx, time() - t0, '\t'.join(['%.5f' % r for r in recs[idx]]),
                   '\t'.join(['%.5f' % r for r in pres[idx]]),
                   '\t'.join(['%.5f' % r for r in hit[idx]]),
-                  '\t'.join(['%.5f' % r for r in ndcgs[idx]]))
+                  '\t'.join(['%.5f' % r for r in ndcgs[idx]]),
+                  '\t'.join(['%.5f' % variances[idx]]),
+                  '\t'.join(['%.5f' % ginis[idx]]))
     print(final_perf)
 
     save_path = '%soutput/%s/%s.result' % (args.proj_path, args.dataset, model.model_type)

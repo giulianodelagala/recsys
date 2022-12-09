@@ -53,6 +53,7 @@ class Data(object):
 
         self.R = sp.dok_matrix((self.n_users, self.n_items), dtype=np.float32)
 
+        self.exist_items_train = set()
         self.train_items, self.test_set = {}, {}
         with open(train_file) as f_train:
             with open(test_file) as f_test:
@@ -61,6 +62,8 @@ class Data(object):
                     l = l.strip('\n')
                     items = [int(i) for i in l.split(' ')]
                     uid, train_items = items[0], items[1:]
+
+                    self.exist_items_train |= set(train_items)
 
                     for i in train_items:
                         self.R[uid, i] = 1.
@@ -78,6 +81,7 @@ class Data(object):
 
                     uid, test_items = items[0], items[1:]
                     self.test_set[uid] = test_items
+                self.exist_items_train = list(self.exist_items_train)
 
     def get_adj_mat(self):
         try:
@@ -148,6 +152,12 @@ class Data(object):
             users = [rd.choice(self.exist_users) for _ in range(self.batch_size)]
 
 
+        if self.batch_size <= self.n_items:
+            items = rd.sample(self.exist_items_train, self.batch_size)
+        else:
+            items = [rd.choice(self.exist_items_train) for _ in range(self.batch_size)]
+
+
         def sample_pos_items_for_u(u, num):
             pos_items = self.train_items[u]
             n_pos_items = len(pos_items)
@@ -174,12 +184,23 @@ class Data(object):
             neg_items = list(set(self.neg_pools[u]) - set(self.train_items[u]))
             return rd.sample(neg_items, num)
 
+        def get_bought_items_for_users():
+            bought = np.zeros((self.batch_size, self.batch_size))
+
+            for i in range(len(users)):
+                for j in range(len(items)):
+                    if items[j] in self.train_items[users[i]]:
+                        bought[i, j] = 1
+            return bought
+
         pos_items, neg_items = [], []
         for u in users:
             pos_items += sample_pos_items_for_u(u, 1)
             neg_items += sample_neg_items_for_u(u, 1)
 
-        return users, pos_items, neg_items
+        bought = get_bought_items_for_users()
+
+        return users, pos_items, neg_items, items, bought
 
     def get_num_users_items(self):
         return self.n_users, self.n_items
